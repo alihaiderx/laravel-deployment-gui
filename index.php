@@ -1,6 +1,9 @@
 <?php
 
-$app = include_once('./config/app.php');
+require_once __DIR__ . '/vendor/autoload.php';
 
+use App\support\Config;
 
-@include('./resources/views/index.php');
+Config::load(__DIR__ . '/config');
+
+require __DIR__ . '/resources/views/index.php';
