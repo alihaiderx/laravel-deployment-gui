@@ -263,18 +263,17 @@ body {
 }
 
 .req-label {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
     font-size: 14px;
     font-weight: 500;
     color: var(--foreground);
 }
 
 .req-detail {
+    display: block;
     font-size: 12px;
     font-weight: 400;
     color: var(--muted-foreground);
+    margin-top: 2px;
 }
 
 .req-status {

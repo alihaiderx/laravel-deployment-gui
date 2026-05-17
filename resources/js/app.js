@@ -1,9 +1,10 @@
 const wizard = (() => {
     const steps = [
         { id: 'requirements', label: 'Server Requirements', desc: 'Verify your server meets all requirements.' },
-        { id: 'database', label: 'Database Setup', desc: 'Configure your database connection.' },
-        { id: 'environment', label: 'Environment', desc: 'Set up your application environment.' },
-        { id: 'installation', label: 'Installation', desc: 'Run migrations and install dependencies.' },
+        { id: 'permissions', label: 'Permissions & Symlinks', desc: 'Check directory permissions and symlink support.' },
+        { id: 'database', label: 'Database', desc: 'Enter your database credentials and test the connection.' },
+        { id: 'environment', label: 'Environment', desc: 'Generate your .env file and configure the application.' },
+        { id: 'installation', label: 'Installation', desc: 'Run migrations, link storage, and finalise setup.' },
         { id: 'complete', label: 'Complete', desc: 'Your application is ready to use.' },
     ];
 
