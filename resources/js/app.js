@@ -3,13 +3,15 @@ const wizard = (() => {
         { id: 'requirements', label: 'Server Requirements', desc: 'Verify your server meets all requirements.' },
         { id: 'permissions', label: 'Permissions & Symlinks', desc: 'Check directory permissions and symlink support.' },
         { id: 'database', label: 'Database', desc: 'Enter your database credentials and test the connection.' },
-        { id: 'environment', label: 'Environment', desc: 'Generate your .env file and configure the application.' },
-        { id: 'installation', label: 'Installation', desc: 'Run migrations, link storage, and finalise setup.' },
+{ id: 'installation', label: 'Installation', desc: 'Run migrations, link storage, and finalise setup.' },
         { id: 'complete', label: 'Complete', desc: 'Your application is ready to use.' },
     ];
 
     let currentIndex = 0;
     let completedSet = new Set();
+    const wizardState = {
+        db: { host: '127.0.0.1', name: '', username: '', password: '', tested: false, empty: false, acknowledged: false },
+    };
 
     const stepsNav = document.getElementById('steps-nav');
     const stepContent = document.getElementById('step-content');
@@ -40,6 +42,47 @@ const wizard = (() => {
         permissions() {
             return renderCheckList(window.__permissions || []);
         },
+        database() {
+            const db = wizardState.db;
+            const resultHtml = (() => {
+                if (!db.tested) return '';
+                if (db.error) {
+                    return `<div class="db-result error"><strong>Connection failed</strong><span>${db.error}</span></div>`;
+                }
+                if (db.empty) {
+                    return `<div class="db-result success"><strong>Connected</strong><span>Database is empty and ready for use.</span></div>`;
+                }
+                const checked = db.acknowledged ? 'checked' : '';
+                return `<div class="db-result warning">
+<strong>Database is not empty</strong>
+<span>Running the installer will override the existing data. All current data will be lost.</span>
+<label class="db-acknowledge"><input type="checkbox" id="db-ack" ${checked}> I understand and want to proceed</label>
+</div>`;
+            })();
+
+            return `<div class="form-grid">
+<div class="form-field">
+<label class="field-label">Host <span class="field-required">*</span></label>
+<input class="field-input" id="db-host" type="text" value="${db.host}" placeholder="localhost" autocomplete="off">
+</div>
+<div class="form-field">
+<label class="field-label">Database Name <span class="field-required">*</span></label>
+<input class="field-input" id="db-name" type="text" value="${db.name}" placeholder="my_database" autocomplete="off">
+</div>
+<div class="form-field">
+<label class="field-label">Username <span class="field-required">*</span></label>
+<input class="field-input" id="db-username" type="text" value="${db.username}" placeholder="root" autocomplete="off">
+</div>
+<div class="form-field">
+<label class="field-label">Password</label>
+<input class="field-input" id="db-password" type="password" value="${db.password}" placeholder="Leave blank if none" autocomplete="new-password">
+</div>
+</div>
+<div class="db-test-row">
+<button class="btn btn-secondary" id="btn-test-db">Test Connection</button>
+</div>
+${resultHtml}`;
+        },
     };
 
     function canProceed() {
@@ -49,6 +92,11 @@ const wizard = (() => {
         }
         if (step.id === 'permissions') {
             return (window.__permissions || []).filter(i => i.required).every(i => i.status);
+        }
+        if (step.id === 'database') {
+            const db = wizardState.db;
+            if (!db.tested || db.error) return false;
+            return db.empty || db.acknowledged;
         }
         return true;
     }
@@ -101,6 +149,60 @@ const wizard = (() => {
         document.getElementById('btn-next')?.addEventListener('click', next);
         document.getElementById('btn-back')?.addEventListener('click', back);
         document.getElementById('btn-finish')?.addEventListener('click', finish);
+
+        if (steps[currentIndex].id === 'database') {
+            const syncDbFields = () => {
+                wizardState.db.host = document.getElementById('db-host')?.value ?? '';
+                wizardState.db.name = document.getElementById('db-name')?.value ?? '';
+                wizardState.db.username = document.getElementById('db-username')?.value ?? '';
+                wizardState.db.password = document.getElementById('db-password')?.value ?? '';
+            };
+            ['db-host', 'db-name', 'db-username', 'db-password'].forEach(id => {
+                document.getElementById(id)?.addEventListener('input', () => {
+                    syncDbFields();
+                    wizardState.db.tested = false;
+                    wizardState.db.error = null;
+                    document.getElementById('btn-next') && (document.getElementById('btn-next').disabled = true);
+                });
+            });
+            document.getElementById('btn-test-db')?.addEventListener('click', async () => {
+                syncDbFields();
+                const btn = document.getElementById('btn-test-db');
+                btn.disabled = true;
+                btn.textContent = 'Testing…';
+                try {
+                    const res = await fetch(`${window.__baseUrl}/index.php?action=test-db`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            host: wizardState.db.host,
+                            name: wizardState.db.name,
+                            username: wizardState.db.username,
+                            password: wizardState.db.password,
+                        }),
+                    });
+                    const data = await res.json();
+                    wizardState.db.tested = true;
+                    if (data.ok) {
+                        wizardState.db.empty = data.empty;
+                        wizardState.db.error = null;
+                        wizardState.db.acknowledged = false;
+                    } else {
+                        wizardState.db.error = data.message || 'Connection failed.';
+                        wizardState.db.empty = false;
+                    }
+                } catch {
+                    wizardState.db.tested = true;
+                    wizardState.db.error = 'Request failed. Check server connectivity.';
+                }
+                renderContent();
+            });
+            document.getElementById('db-ack')?.addEventListener('change', e => {
+                wizardState.db.acknowledged = e.target.checked;
+                const nextBtn = document.getElementById('btn-next');
+                if (nextBtn) nextBtn.disabled = !canProceed();
+            });
+        }
     }
 
     function goTo(index) {

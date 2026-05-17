@@ -2,8 +2,14 @@
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-use App\support\Config;
+use App\Support\Config;
+use App\Support\Router;
 
 Config::load(__DIR__ . '/config');
 
-require __DIR__ . '/resources/views/index.php';
+$router = new Router();
+
+require __DIR__ . '/routes/web.php';
+require __DIR__ . '/routes/api.php';
+
+$router->dispatch();

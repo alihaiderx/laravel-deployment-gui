@@ -35,6 +35,7 @@ $permissions = (new CheckPermissions())->check();
         </main>
     </div>
     <script>
+        window.__baseUrl = <?= json_encode($baseUrl) ?>;
         window.__serverRequirements = <?= json_encode($serverRequirements) ?>;
         window.__permissions = <?= json_encode($permissions) ?>;
     </script>

@@ -304,3 +304,103 @@ body {
     margin-left: 6px;
     vertical-align: middle;
 }
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--foreground);
+}
+
+.field-required {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.field-input {
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--input);
+    border-radius: calc(var(--radius) - 2px);
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--foreground);
+    background: var(--background);
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+}
+
+.field-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.field-input::placeholder {
+    color: var(--muted-foreground);
+}
+
+.db-test-row {
+    margin-top: 24px;
+}
+
+.db-result {
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    border: 1px solid;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 14px;
+}
+
+.db-result strong {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.db-result span {
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.db-result.success {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #15803d;
+}
+
+.db-result.error {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.db-result.warning {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.db-acknowledge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: inherit;
+}
