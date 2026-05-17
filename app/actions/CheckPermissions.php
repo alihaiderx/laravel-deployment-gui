@@ -18,8 +18,8 @@ class CheckPermissions
     {
         $path = Config::deployBasePath();
         $label = Config::get('app.deployToParent', false)
-            ? 'Parent directory is writable'
-            : 'Current directory is writable';
+            ? 'Deploy base directory is writable'
+            : 'Parent directory is writable';
 
         return [
             'label' => $label,

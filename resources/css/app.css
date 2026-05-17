@@ -394,6 +394,106 @@ body {
     color: #92400e;
 }
 
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.install-loading {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 40px;
+}
+
+.install-spinner {
+    width: 44px;
+    height: 44px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+    flex-shrink: 0;
+}
+
+.install-message {
+    font-size: 14px;
+    color: var(--muted-foreground);
+    text-align: center;
+    max-width: 300px;
+    line-height: 1.5;
+}
+
+.install-failed {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 40px;
+    text-align: center;
+}
+
+.install-failed-icon {
+    color: #dc2626;
+    margin-bottom: 4px;
+}
+
+.install-failed-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--foreground);
+    letter-spacing: -0.2px;
+}
+
+.install-failed-desc {
+    font-size: 14px;
+    color: var(--muted-foreground);
+    max-width: 320px;
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+.complete-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 40px;
+    text-align: center;
+}
+
+.complete-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #dcfce7;
+    color: #16a34a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.complete-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--foreground);
+    letter-spacing: -0.3px;
+}
+
+.complete-desc {
+    font-size: 14px;
+    color: var(--muted-foreground);
+    max-width: 320px;
+    line-height: 1.5;
+}
+
 .db-acknowledge {
     display: flex;
     align-items: center;

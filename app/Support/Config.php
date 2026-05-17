@@ -31,11 +31,16 @@ class Config
         return $value;
     }
 
+    public static function basePath(): string
+    {
+        return self::$basePath;
+    }
+
     public static function deployBasePath(): string
     {
         return self::get('app.deployToParent', false)
-            ? dirname(self::$basePath)
-            : self::$basePath;
+            ? dirname(dirname(self::$basePath))
+            : dirname(self::$basePath);
     }
 
     public static function deployPath(): string

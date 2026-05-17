@@ -11,6 +11,7 @@ const wizard = (() => {
     let completedSet = new Set();
     const wizardState = {
         db: { host: '127.0.0.1', name: '', username: '', password: '', tested: false, empty: false, acknowledged: false },
+        installation: { url: '' },
     };
 
     const stepsNav = document.getElementById('steps-nav');
@@ -41,6 +42,36 @@ const wizard = (() => {
         },
         permissions() {
             return renderCheckList(window.__permissions || []);
+        },
+        complete() {
+            const url = wizardState.installation.url;
+            const linkHtml = url
+                ? `<a href="${url}" target="_blank" rel="noopener" class="btn btn-primary" style="margin-top: 8px;">Visit Application</a>`
+                : '';
+            return `<div class="complete-screen">
+<div class="complete-icon"><svg width="32" height="32" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg></div>
+<h3 class="complete-title">Installation Complete</h3>
+<p class="complete-desc">Your application has been installed and is ready to use.</p>
+${linkHtml}
+</div>`;
+        },
+        installation() {
+            const url = wizardState.installation.url;
+            const files = window.__sourceFiles || [];
+            const allReady = files.filter(f => f.required).every(f => f.status);
+
+            const notice = !allReady
+                ? `<div class="db-result error"><strong>Source files missing</strong><span>Place the required files in the <code>source-code/</code> directory alongside this installer before proceeding.</span></div>`
+                : '';
+
+            return `<div class="form-grid" style="grid-template-columns: 1fr;">
+<div class="form-field">
+<label class="field-label">Application URL <span class="field-required">*</span></label>
+<input class="field-input" id="install-url" type="url" value="${url}" placeholder="https://example.com" autocomplete="off">
+</div>
+</div>
+<div style="margin-top: 24px;">${renderCheckList(files)}</div>
+${notice}`;
         },
         database() {
             const db = wizardState.db;
@@ -98,7 +129,87 @@ ${resultHtml}`;
             if (!db.tested || db.error) return false;
             return db.empty || db.acknowledged;
         }
+        if (step.id === 'installation') {
+            const urlOk = wizardState.installation.url.trim() !== '';
+            const filesOk = (window.__sourceFiles || []).filter(f => f.required).every(f => f.status);
+            return urlOk && filesOk;
+        }
         return true;
+    }
+
+    const loadingMessages = [
+        'Preparing installation environment…',
+        'Verifying source files…',
+        'Backing up existing database…',
+        'Connecting to database…',
+        'Importing database schema…',
+        'Creating database tables…',
+        'Copying project files…',
+        'Publishing public assets…',
+        'Setting file permissions…',
+        'Creating symbolic links…',
+        'Generating configuration files…',
+        'Configuring application settings…',
+        'Clearing application cache…',
+        'Optimising autoloader…',
+        'Almost there…',
+    ];
+
+    async function installAndProceed() {
+        const shuffled = [...loadingMessages].sort(() => Math.random() - 0.5);
+        let msgIndex = 0;
+
+        stepContent.innerHTML = `<div class="install-loading">
+<div class="install-spinner"></div>
+<p class="install-message">${shuffled[0]}</p>
+</div>`;
+
+        const interval = setInterval(() => {
+            msgIndex = (msgIndex + 1) % shuffled.length;
+            const el = stepContent.querySelector('.install-message');
+            if (el) el.textContent = shuffled[msgIndex];
+        }, 2800);
+
+        try {
+            const res = await fetch(`${window.__baseUrl}/index.php?action=install`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    db: {
+                        host: wizardState.db.host,
+                        name: wizardState.db.name,
+                        username: wizardState.db.username,
+                        password: wizardState.db.password,
+                    },
+                    dbWasEmpty: wizardState.db.empty,
+                    url: wizardState.installation.url,
+                }),
+            });
+            const data = await res.json();
+            clearInterval(interval);
+
+            if (data.ok) {
+                completedSet.add(currentIndex);
+                goTo(steps.length - 1);
+            } else {
+                stepContent.innerHTML = `<div class="install-failed">
+<div class="install-failed-icon">${iconFail}</div>
+<h3 class="install-failed-title">Installation Failed</h3>
+<p class="install-failed-desc">${data.message || 'An unexpected error occurred.'}</p>
+<button class="btn btn-secondary" id="btn-retry">Try Again</button>
+</div>`;
+                document.getElementById('btn-retry')?.addEventListener('click', () => goTo(currentIndex));
+            }
+        } catch {
+            clearInterval(interval);
+            stepContent.innerHTML = `<div class="install-failed">
+<div class="install-failed-icon">${iconFail}</div>
+<h3 class="install-failed-title">Request Failed</h3>
+<p class="install-failed-desc">Could not reach the server. Check your connection and try again.</p>
+<button class="btn btn-secondary" id="btn-retry">Try Again</button>
+</div>`;
+            document.getElementById('btn-retry')?.addEventListener('click', () => goTo(currentIndex));
+        }
     }
 
     function renderNav() {
@@ -127,7 +238,8 @@ ${resultHtml}`;
         const proceed = canProceed();
 
         const backBtn = !isFirst ? `<button class="btn btn-secondary" id="btn-back">Back</button>` : '';
-        const nextBtn = !isLast ? `<button class="btn btn-primary" id="btn-next" ${!proceed ? 'disabled' : ''}>Continue</button>` : '';
+        const nextLabel = step.id === 'installation' ? 'Install' : 'Continue';
+        const nextBtn = !isLast ? `<button class="btn btn-primary" id="btn-next" ${!proceed ? 'disabled' : ''}>${nextLabel}</button>` : '';
         const finishBtn = isLast ? `<button class="btn btn-primary" id="btn-finish">Finish setup</button>` : '';
 
         stepContent.innerHTML = `<div class="step-panel">
@@ -146,9 +258,18 @@ ${resultHtml}`;
             document.getElementById('panel-body').innerHTML = renderers[step.id]();
         }
 
-        document.getElementById('btn-next')?.addEventListener('click', next);
+        const nextClickHandler = steps[currentIndex].id === 'installation' ? installAndProceed : next;
+        document.getElementById('btn-next')?.addEventListener('click', nextClickHandler);
         document.getElementById('btn-back')?.addEventListener('click', back);
         document.getElementById('btn-finish')?.addEventListener('click', finish);
+
+        if (steps[currentIndex].id === 'installation') {
+            document.getElementById('install-url')?.addEventListener('input', e => {
+                wizardState.installation.url = e.target.value;
+                const nextBtn = document.getElementById('btn-next');
+                if (nextBtn) nextBtn.disabled = !canProceed();
+            });
+        }
 
         if (steps[currentIndex].id === 'database') {
             const syncDbFields = () => {
