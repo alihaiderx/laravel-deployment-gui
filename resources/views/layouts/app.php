@@ -2,6 +2,7 @@
 
 use App\Support\Config;
 use App\Actions\CheckServerRequirements;
+use App\Actions\CheckPermissions;
 
 $sidebarColor = Config::get('branding.sidebarColor', '#18181b');
 $accentColor = Config::get('branding.accentColor', '#6366f1');
@@ -9,6 +10,7 @@ $appName = Config::get('app.name', 'Laravel Installer');
 $appVersion = Config::get('app.version', '');
 $baseUrl = Config::get('app.url', '');
 $serverRequirements = (new CheckServerRequirements())->check();
+$permissions = (new CheckPermissions())->check();
 
 ?><!DOCTYPE html>
 <html lang="en">
@@ -32,7 +34,10 @@ $serverRequirements = (new CheckServerRequirements())->check();
             <div id="step-content" class="step-content"></div>
         </main>
     </div>
-    <script>window.__serverRequirements = <?= json_encode($serverRequirements) ?>;</script>
+    <script>
+        window.__serverRequirements = <?= json_encode($serverRequirements) ?>;
+        window.__permissions = <?= json_encode($permissions) ?>;
+    </script>
     <script src="<?= $baseUrl ?>/resources/js/app.js"></script>
 </body>
 </html>

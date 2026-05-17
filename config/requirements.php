@@ -2,6 +2,7 @@
 
 return [
     'php' => '8.0',
+    'symlinks' => false,
     'extensions' => [
         ['name' => 'bcmath', 'required' => true],
         ['name' => 'ctype', 'required' => true],
