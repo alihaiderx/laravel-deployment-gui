@@ -29,11 +29,17 @@ class TestDatabaseConnection
 
         $port = $port !== '' ? $port : '3306';
 
+        $socket = @fsockopen($host, (int) $port, $errno, $errstr, 5);
+        if ($socket === false) {
+            return ['ok' => false, 'message' => "Could not connect to {$host}:{$port}. Check that the host and port are correct and the server is reachable."];
+        }
+        fclose($socket);
+
         try {
             $dsn = "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4";
             $pdo = new PDO($dsn, $username, $password, [
-                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                PDO::MYSQL_ATTR_CONNECT_TIMEOUT => 5,
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_TIMEOUT => 5,
             ]);
 
             $count = (int) $pdo->query(

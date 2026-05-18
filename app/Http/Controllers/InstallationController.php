@@ -14,6 +14,7 @@ class InstallationController
 {
     public function install(): void
     {
+        set_time_limit(180);
         header('Content-Type: application/json');
         $body = json_decode(file_get_contents('php://input'), true) ?? [];
 
@@ -21,6 +22,7 @@ class InstallationController
         $dbWasEmpty = $body['dbWasEmpty'] ?? true;
         $url = $body['url'] ?? '';
         $projectName = $body['projectName'] ?? '';
+        $licenseKey = $body['licenseKey'] ?? '';
 
         $deployPath = Config::deployPath();
         $results = [];
@@ -43,7 +45,7 @@ class InstallationController
         $steps = [
             fn() => (new ImportDatabase())->import($db['host'] ?? '', $db['port'] ?? '3306', $db['name'] ?? '', $db['username'] ?? '', $db['password'] ?? ''),
             fn() => (new CopyProjectFiles())->copy($deployPath),
-            fn() => (new GenerateEnvFile())->generate($deployPath, $url, $projectName, $db),
+            fn() => (new GenerateEnvFile())->generate($deployPath, $url, $projectName, $db, $licenseKey),
             fn() => (new UpdateEntryFile())->update($deployPath),
         ];
 

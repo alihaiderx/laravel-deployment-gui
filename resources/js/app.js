@@ -3,14 +3,17 @@ const wizard = (() => {
     { id: 'requirements', label: 'Server Requirements', desc: 'Verify your server meets all requirements.' },
     { id: 'permissions', label: 'Permissions & Symlinks', desc: 'Check directory permissions and symlink support.' },
     { id: 'database', label: 'Database', desc: 'Enter your database credentials and test the connection.' },
+    ...(window.__licenseUrl ? [{ id: 'license', label: 'License', desc: 'Enter and validate your license key.' }] : []),
     { id: 'installation', label: 'Installation', desc: 'Run migrations, link storage, and finalise setup.' },
     { id: 'complete', label: 'Complete', desc: 'Your application is ready to use.' },
   ];
 
   let currentIndex = 0;
   let completedSet = new Set();
+  let installing = false;
   const wizardState = {
     db: { host: '127.0.0.1', port: '3306', name: '', username: '', password: '', tested: false, empty: false, acknowledged: false },
+    license: { key: '', validated: false, error: null },
     installation: { url: '', projectName: '' },
   };
 
@@ -41,7 +44,15 @@ const wizard = (() => {
       return renderCheckList(window.__serverRequirements || []);
     },
     permissions() {
-      return renderCheckList(window.__permissions || []);
+      const symlinks = window.__symlinks || [];
+      const symlinkBase = window.__symlinkBase || '';
+      const symlinksHtml = symlinks.length
+        ? `<div class="db-result info" style="margin-top: 20px;">
+<strong>Symlinks to be created</strong>
+${symlinks.map(s => `<span style="font-family: monospace; font-size: 12px;">${symlinkBase}/${s.link} &rarr; ${s.target}</span>`).join('')}
+</div>`
+        : '';
+      return renderCheckList(window.__permissions || []) + symlinksHtml;
     },
     complete() {
       const url = wizardState.installation.url;
@@ -136,6 +147,27 @@ ${notice}`;
 </div>
 ${resultHtml}`;
     },
+    license() {
+      const lc = wizardState.license;
+      const resultHtml = (() => {
+        if (!lc.validated && !lc.error) return '';
+        if (lc.error) {
+          return `<div class="db-result error"><strong>Validation failed</strong><span>${lc.error}</span></div>`;
+        }
+        return `<div class="db-result success"><strong>License valid</strong><span>Your license key has been verified.</span></div>`;
+      })();
+
+      return `<div class="form-grid">
+<div class="form-field" style="grid-column: span 2;">
+<label class="field-label">License Key <span class="field-required">*</span></label>
+<input class="field-input" id="lc-key" type="text" value="${lc.key}" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off">
+</div>
+</div>
+<div class="db-test-row">
+<button class="btn btn-secondary" id="btn-validate-lc">Validate License</button>
+</div>
+${resultHtml}`;
+    },
   };
 
   function canProceed() {
@@ -150,6 +182,9 @@ ${resultHtml}`;
       const db = wizardState.db;
       if (!db.tested || db.error) return false;
       return db.empty || db.acknowledged;
+    }
+    if (step.id === 'license') {
+      return wizardState.license.validated && !wizardState.license.error;
     }
     if (step.id === 'installation') {
       const urlOk = wizardState.installation.url.trim() !== '';
@@ -178,6 +213,8 @@ ${resultHtml}`;
   ];
 
   async function installAndProceed() {
+    installing = true;
+    renderNav();
     const shuffled = [...loadingMessages].sort(() => Math.random() - 0.5);
     let msgIndex = 0;
 
@@ -207,10 +244,12 @@ ${resultHtml}`;
           dbWasEmpty: wizardState.db.empty,
           url: wizardState.installation.url,
           projectName: wizardState.installation.projectName,
+          licenseKey: wizardState.license.key,
         }),
       });
       const data = await res.json();
       clearInterval(interval);
+      installing = false;
 
       if (data.ok) {
         wizardState.installation.result = data;
@@ -227,6 +266,7 @@ ${resultHtml}`;
       }
     } catch {
       clearInterval(interval);
+      installing = false;
       stepContent.innerHTML = `<div class="install-failed">
 <div class="install-failed-icon">${iconFail}</div>
 <h3 class="install-failed-title">Request Failed</h3>
@@ -251,9 +291,11 @@ ${resultHtml}`;
       return `<div class="${classes}" data-index="${index}"><span class="step-label">${step.label}</span></div>`;
     }).join('');
 
-    stepsNav.querySelectorAll('.step-item.reachable').forEach(el => {
-      el.addEventListener('click', () => goTo(parseInt(el.dataset.index)));
-    });
+    if (!installing) {
+      stepsNav.querySelectorAll('.step-item.reachable').forEach(el => {
+        el.addEventListener('click', () => goTo(parseInt(el.dataset.index)));
+      });
+    }
   }
 
   function renderContent() {
@@ -262,10 +304,11 @@ ${resultHtml}`;
     const isLast = currentIndex === steps.length - 1;
     const proceed = canProceed();
 
-    const backBtn = !isFirst ? `<button class="btn btn-secondary" id="btn-back">Back</button>` : '';
+    const isComplete = step.id === 'complete';
+    const backBtn = !isFirst && !isComplete ? `<button class="btn btn-secondary" id="btn-back">Back</button>` : '';
     const nextLabel = step.id === 'installation' ? 'Install' : 'Continue';
     const nextBtn = !isLast ? `<button class="btn btn-primary" id="btn-next" ${!proceed ? 'disabled' : ''}>${nextLabel}</button>` : '';
-    const finishBtn = isLast ? `<button class="btn btn-primary" id="btn-finish">Finish setup</button>` : '';
+    const finishBtn = isLast && !isComplete ? `<button class="btn btn-primary" id="btn-finish">Finish setup</button>` : '';
 
     stepContent.innerHTML = `<div class="step-panel">
 <div class="panel-header">
@@ -356,6 +399,39 @@ ${resultHtml}`;
         wizardState.db.acknowledged = e.target.checked;
         const nextBtn = document.getElementById('btn-next');
         if (nextBtn) nextBtn.disabled = !canProceed();
+      });
+    }
+
+    if (steps[currentIndex].id === 'license') {
+      document.getElementById('lc-key')?.addEventListener('input', e => {
+        wizardState.license.key = e.target.value;
+        wizardState.license.validated = false;
+        wizardState.license.error = null;
+        document.getElementById('btn-next') && (document.getElementById('btn-next').disabled = true);
+      });
+      document.getElementById('btn-validate-lc')?.addEventListener('click', async () => {
+        const btn = document.getElementById('btn-validate-lc');
+        btn.disabled = true;
+        btn.textContent = 'Validating…';
+        try {
+          const res = await fetch(`${window.__baseUrl}/index.php?action=validate-license`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: wizardState.license.key }),
+          });
+          const data = await res.json();
+          if (data.ok) {
+            wizardState.license.validated = true;
+            wizardState.license.error = null;
+          } else {
+            wizardState.license.validated = false;
+            wizardState.license.error = data.message || 'Validation failed.';
+          }
+        } catch {
+          wizardState.license.validated = false;
+          wizardState.license.error = 'Request failed. Check server connectivity.';
+        }
+        renderContent();
       });
     }
   }

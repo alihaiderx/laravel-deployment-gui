@@ -394,6 +394,12 @@ body {
     color: #92400e;
 }
 
+.db-result.info {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
@@ -503,4 +509,106 @@ body {
     font-weight: 500;
     cursor: pointer;
     color: inherit;
+}
+
+@media (max-width: 640px) {
+    body {
+        padding: 0;
+        align-items: stretch;
+        background: var(--card);
+    }
+
+    #app {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+        max-width: 100%;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+    }
+
+    .sidebar {
+        width: 100%;
+        flex-direction: column;
+        flex-shrink: 0;
+    }
+
+    .sidebar-brand {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .steps-nav {
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 0 8px;
+        gap: 2px;
+        scrollbar-width: none;
+    }
+
+    .steps-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .step-item {
+        flex-shrink: 0;
+        white-space: nowrap;
+        font-size: 13px;
+    }
+
+    .main {
+        overflow: visible;
+    }
+
+    .step-content {
+        overflow: visible;
+    }
+
+    .step-panel {
+        min-height: 0;
+    }
+
+    .panel-header {
+        padding: 20px 20px 16px;
+    }
+
+    .panel-body {
+        padding: 20px;
+        overflow-y: visible;
+    }
+
+    .panel-footer {
+        padding: 12px 20px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 641px) and (max-width: 900px) {
+    body {
+        padding: 16px;
+    }
+
+    #app {
+        height: auto;
+        min-height: 560px;
+    }
+
+    .sidebar {
+        width: 200px;
+    }
+
+    .panel-header {
+        padding: 24px 24px 18px;
+    }
+
+    .panel-body {
+        padding: 22px 24px;
+    }
+
+    .panel-footer {
+        padding: 14px 24px;
+    }
 }

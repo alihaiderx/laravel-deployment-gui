@@ -6,7 +6,7 @@ use App\Support\Config;
 
 class GenerateEnvFile
 {
-    public function generate(string $deployPath, string $url, string $projectName, array $db): array
+    public function generate(string $deployPath, string $url, string $projectName, array $db, string $licenseKey = ''): array
     {
         $exampleFile = Config::basePath()
             . DIRECTORY_SEPARATOR . 'source-code'
@@ -33,6 +33,20 @@ class GenerateEnvFile
         $content = $this->setValue($content, 'DB_DATABASE', $db['name'] ?? '');
         $content = $this->setValue($content, 'DB_USERNAME', $db['username'] ?? '');
         $content = $this->setValue($content, 'DB_PASSWORD', $db['password'] ?? '');
+
+        if ($licenseKey !== '') {
+            $content = $this->setValue($content, 'APP_LC', $licenseKey);
+        }
+
+        $appId = Config::get('installation.appId', '');
+        if ($appId !== '') {
+            $content = $this->setValue($content, 'APP_ID', $appId);
+        }
+
+        $appSecret = Config::get('installation.appSecret', '');
+        if ($appSecret !== '') {
+            $content = $this->setValue($content, 'APP_SECRET', $appSecret);
+        }
 
         file_put_contents($deployPath . DIRECTORY_SEPARATOR . '.env', $content);
 
