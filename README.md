@@ -2,15 +2,13 @@
 
 A self-contained PHP web installer for Laravel applications. It gives your clients or end-users a clean, step-by-step browser interface to deploy a Laravel app without any CLI access, SSH, or technical knowledge.
 
-![Laravel Deployment GUI](art/laravel-deployment-gui.jpg)
+<img src="art/laravel-deployment-gui.jpg" width="600" alt="Laravel Deployment GUI">
 
----
 
 ## What It Solves
 
 Distributing a Laravel application to a shared host or client server typically requires SSH access, Composer, Artisan commands, and manual `.env` configuration. This installer packages all of that into a single drag-and-drop directory that runs entirely in the browser. The user fills in their database credentials, validates a license if required, clicks Install, and the app is live.
 
----
 
 ## How It Works
 
@@ -26,7 +24,6 @@ The installer is placed alongside the app it deploys. At install time it:
 8. Updates the public entry point to reference the new deploy path
 9. Creates any configured symlinks
 
----
 
 ## Directory Layout
 
@@ -60,7 +57,6 @@ After installation the deployed app lands in a sibling directory:
     └── ...
 ```
 
----
 
 ## Requirements
 
@@ -75,7 +71,6 @@ After installation the deployed app lands in a sibling directory:
 - `source-code/db.sql` - a full database dump (required if `requireDbFile` is `true`)
 - `source-code/project/.env.example` - used as the template for `.env` generation
 
----
 
 ## Installation
 
@@ -86,13 +81,11 @@ After installation the deployed app lands in a sibling directory:
 5. Visit `https://yourdomain.com/installer/` in a browser
 6. Follow the wizard
 
----
 
 ## Configuration
 
 All configuration lives in the `config/` directory across three files.
 
----
 
 ### `config/app.php`
 
@@ -118,7 +111,6 @@ return [
 | `sidebarColor` | string | CSS colour for the sidebar background |
 | `accentColor` | string | CSS colour for primary buttons and focus rings |
 
----
 
 ### `config/installation.php`
 
@@ -158,7 +150,6 @@ This produces:
 /var/www/public_html/storage  →  /var/www/public_html/app-name-xxx/storage/app/public
 ```
 
----
 
 ### `config/requirements.php`
 
@@ -183,7 +174,6 @@ return [
 | `symlinks` | bool | If `true`, adds a symlink-support check to the requirements list |
 | `extensions` | array | Each entry has a `name` (PHP extension name) and `required` flag. `true` blocks proceeding on failure; `false` shows a warning only |
 
----
 
 ## License Validation
 
@@ -207,7 +197,6 @@ Your API should return JSON. Any of the following response shapes are treated as
 
 A plain-text response of `true` is also accepted. Any other response, or an HTTP status outside `2xx`, is treated as invalid. On success the license key is written to the deployed `.env` as `APP_LC`.
 
----
 
 ## What Gets Written to `.env`
 
@@ -228,7 +217,6 @@ The installer generates `.env` from `source-code/project/.env.example`, replacin
 | `APP_ID` | Value of `appId` in `config/installation.php` (only if non-empty) |
 | `APP_SECRET` | Value of `appSecret` in `config/installation.php` (only if non-empty) |
 
----
 
 ## Wizard Steps
 
@@ -241,7 +229,6 @@ The installer generates `.env` from `source-code/project/.env.example`, replacin
 | **Installation** | Accepts project name and application URL. Clicking Install runs all deployment steps sequentially |
 | **Complete** | Confirms success and provides a direct link to the installed application |
 
----
 
 ## Security Notes
 
