@@ -13,6 +13,7 @@ class DatabaseController
 
         echo json_encode((new TestDatabaseConnection())->test(
             $body['host'] ?? '',
+            $body['port'] ?? '3306',
             $body['name'] ?? '',
             $body['username'] ?? '',
             $body['password'] ?? ''

@@ -7,6 +7,7 @@ use App\Actions\ImportDatabase;
 use App\Actions\CopyProjectFiles;
 use App\Actions\CreateSymlinks;
 use App\Actions\GenerateEnvFile;
+use App\Actions\UpdateEntryFile;
 use App\Support\Config;
 
 class InstallationController
@@ -19,6 +20,7 @@ class InstallationController
         $db = $body['db'] ?? [];
         $dbWasEmpty = $body['dbWasEmpty'] ?? true;
         $url = $body['url'] ?? '';
+        $projectName = $body['projectName'] ?? '';
 
         $deployPath = Config::deployPath();
         $results = [];
@@ -26,6 +28,7 @@ class InstallationController
         if (!$dbWasEmpty) {
             $result = (new BackupDatabase())->backup(
                 $db['host'] ?? '',
+                $db['port'] ?? '3306',
                 $db['name'] ?? '',
                 $db['username'] ?? '',
                 $db['password'] ?? ''
@@ -38,11 +41,15 @@ class InstallationController
         }
 
         $steps = [
-            fn() => (new ImportDatabase())->import($db['host'] ?? '', $db['name'] ?? '', $db['username'] ?? '', $db['password'] ?? ''),
+            fn() => (new ImportDatabase())->import($db['host'] ?? '', $db['port'] ?? '3306', $db['name'] ?? '', $db['username'] ?? '', $db['password'] ?? ''),
             fn() => (new CopyProjectFiles())->copy($deployPath),
-            fn() => (new CreateSymlinks())->create($deployPath),
-            fn() => (new GenerateEnvFile())->generate($deployPath, $url),
+            fn() => (new GenerateEnvFile())->generate($deployPath, $url, $projectName, $db),
+            fn() => (new UpdateEntryFile())->update($deployPath),
         ];
+
+        if (Config::get('requirements.symlinks', false)) {
+            $steps[] = fn() => (new CreateSymlinks())->create($deployPath);
+        }
 
         foreach ($steps as $step) {
             $result = $step();

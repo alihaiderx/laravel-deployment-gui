@@ -10,10 +10,18 @@ class CreateSymlinks
     {
         $symlinks = Config::get('installation.symlinks', []);
         $errors = [];
+        $skipped = [];
+
+        $linkBase = dirname(Config::basePath());
 
         foreach ($symlinks as $entry) {
             $target = $deployPath . DIRECTORY_SEPARATOR . $entry['target'];
-            $link = $deployPath . DIRECTORY_SEPARATOR . $entry['link'];
+            $link = $linkBase . DIRECTORY_SEPARATOR . $entry['link'];
+
+            if (!file_exists($target) && !is_dir($target)) {
+                $skipped[] = $entry['link'] . ' -> ' . $entry['target'];
+                continue;
+            }
 
             $linkDir = dirname($link);
             if (!is_dir($linkDir)) {
@@ -25,7 +33,7 @@ class CreateSymlinks
             }
 
             if (!@symlink($target, $link)) {
-                $errors[] = "Could not create symlink: {$entry['link']} → {$entry['target']}";
+                $errors[] = "Could not create symlink: {$entry['link']} -> {$entry['target']}";
             }
         }
 
@@ -33,6 +41,6 @@ class CreateSymlinks
             return ['ok' => false, 'action' => 'create_symlinks', 'message' => implode('; ', $errors)];
         }
 
-        return ['ok' => true, 'action' => 'create_symlinks'];
+        return ['ok' => true, 'action' => 'create_symlinks', 'skipped' => $skipped];
     }
 }
